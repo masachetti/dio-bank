@@ -6,9 +6,16 @@ import bank.model.account.SavingAccount;
 import bank.model.client.Client;
 import bank.model.client.Corporation;
 import bank.model.client.Individual;
+import bank.model.transaction.Deposit;
+import bank.model.transaction.Transaction;
+import bank.model.transaction.Transfer;
+import bank.model.transaction.Withdraw;
+import utils.TablePrinter;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Bank {
@@ -18,34 +25,25 @@ public class Bank {
     public Bank(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
-
-    private void printLine() {
-        System.out.println("----------------------------------------------------------------------------------------");
-    }
-
+    
     public void showAllClients() {
         String jpqlQuery = "select c from Client c";
         try {
             List<Client> clientList = entityManager.createQuery(jpqlQuery, Client.class).getResultList();
-            printLine();
-            System.out.format("%10s %30s %20s %20s\n", "Client Id", "Name", "CPF", "CNPJ");
-            printLine();
+            List<String> header = Arrays.asList("Client Id", "Name", "CPF", "CNPJ");
+            List<List<String>> rows = new ArrayList<>();
             clientList.forEach(client -> {
                 String cpf = "Null";
                 String cnpj = "Null";
                 if (client instanceof Corporation) {
                     cnpj = ((Corporation) client).getCnpj();
-                }
-                else if (client instanceof Individual) {
+                } else if (client instanceof Individual) {
                     cpf = ((Individual) client).getCpf();
                 }
-                System.out.format("%10s %30s %20s %20s\n",
-                        client.getId(),
-                        client.getName(),
-                        cpf,
-                        cnpj);
+                List<String> row = Arrays.asList(client.getId().toString(), client.getName(), cpf, cnpj);
+                rows.add(row);
             });
-            printLine();
+            TablePrinter.printTable(header, rows, 5);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -55,27 +53,58 @@ public class Bank {
         String jpqlQuery = "select a from Account a";
         try {
             List<Account> accountList = entityManager.createQuery(jpqlQuery, Account.class).getResultList();
-            printLine();
-            System.out.format("%10s %10s %15s %15s %10s %25s\n",
-                    "Id", "Agency", "Account Number", "Account Type", "Balance", "Owner");
-            printLine();
+            List<String> header = Arrays.asList("Id", "Agency", "Account Number", "Account Type", "Balance", "Owner");
+            List<List<String>> rows = new ArrayList<>();
+
             accountList.forEach(account -> {
                 String accountType = "Null";
                 if (account instanceof CheckingAccount) {
                     accountType = "Checking";
-                }
-                else if (account instanceof SavingAccount) {
+                } else if (account instanceof SavingAccount) {
                     accountType = "Saving";
                 }
-                System.out.format("%10s %10s %15s %15s R$%5.2f %25s\n",
-                        account.getId(),
-                        account.getAgency(),
-                        account.getAccountNumber(),
+                List<String> row = Arrays.asList(
+                        account.getId().toString(),
+                        account.getAgency().toString(),
+                        account.getAccountNumber().toString(),
                         accountType,
-                        account.getBalance(),
+                        String.format("R$%.2f",account.getBalance()),
                         account.getClient().getName());
+                rows.add(row);
             });
-            printLine();
+            TablePrinter.printTable(header, rows, 5);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void showAllTransactions() {
+        String jpqlQuery = "select t from Transaction t";
+        try {
+            List<Transaction> transactionList = entityManager.createQuery(jpqlQuery, Transaction.class).getResultList();
+            List<String> header = Arrays.asList("Id", "Operation", "Account N.", "Value", "Rec. Account N.");
+            List<List<String>> rows = new ArrayList<>();
+
+            transactionList.forEach(transaction -> {
+                String transactionType = "Null";
+                String recAccountNumberString = "Null";
+                if (transaction instanceof Deposit) {
+                    transactionType = "Deposit";
+                } else if (transaction instanceof Withdraw) {
+                    transactionType = "Withdraw";
+                } else if (transaction instanceof Transfer) {
+                    transactionType = "Transfer";
+                    recAccountNumberString = ((Transfer) transaction).getReceiverAccount().getAccountNumber().toString();
+                }
+                List<String> row = Arrays.asList(
+                        transaction.getId().toString(),
+                        transactionType,
+                        transaction.getAccount().getAccountNumber().toString(),
+                        String.format("R$%.2f",transaction.getValue()),
+                        recAccountNumberString);
+                rows.add(row);
+            });
+            TablePrinter.printTable(header, rows, 5);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -86,12 +115,55 @@ public class Bank {
         entityManager.persist(client);
         entityManager.getTransaction().commit();
     }
-    public void assignAccountToClient(Client client, Account account){
+
+    public void assignAccountToClient(Client client, Account account) {
         client.getAccounts().add(account);
         account.setClient(client);
         entityManager.getTransaction().begin();
         entityManager.persist(client);
         entityManager.persist(account);
+        entityManager.getTransaction().commit();
+    }
+
+    public void performDeposit(Account account, double value) {
+        Deposit deposit = new Deposit(account, value);
+        double actualBalance = account.getBalance();
+        account.setBalance(actualBalance + value);
+        entityManager.getTransaction().begin();
+        entityManager.persist(account);
+        entityManager.persist(deposit);
+        entityManager.getTransaction().commit();
+    }
+
+    public void performWithdraw(Account account, double value) {
+        double actualBalance = account.getBalance();
+        double newBalance = actualBalance - value;
+        if (newBalance < 0) {
+            return;
+        }
+        Withdraw withdraw = new Withdraw(account, value);
+        account.setBalance(newBalance);
+        entityManager.getTransaction().begin();
+        entityManager.persist(account);
+        entityManager.persist(withdraw);
+        entityManager.getTransaction().commit();
+    }
+
+    public void performTransfer(Account account, double value, Account receiverAccount) {
+        double actualBalance = account.getBalance();
+        double newBalance = actualBalance - value;
+        if (newBalance < 0) {
+            return;
+        }
+        Transfer transfer = new Transfer(account, value, receiverAccount);
+        account.setBalance(newBalance);
+        double receiverBalance = receiverAccount.getBalance();
+        double newReceiverBalance = receiverBalance + value;
+        receiverAccount.setBalance(newReceiverBalance);
+        entityManager.getTransaction().begin();
+        entityManager.persist(account);
+        entityManager.persist(receiverAccount);
+        entityManager.persist(transfer);
         entityManager.getTransaction().commit();
     }
 }
