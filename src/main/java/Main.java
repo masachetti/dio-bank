@@ -39,6 +39,13 @@ public class Main {
         bank.showAllAccounts();
         bank.showAllTransactions();
 
+        Client retClient = bank.getClientByCNPJ("75.027.815/0001-63");
+        Client retClient2 = bank.getClientByCPF("123.245.111-30");
+        System.out.println("Getting client by CNPJ: " + retClient);
+        System.out.println("Getting client by CPF: " + retClient2);
+
+        bank.showAccountTransactions(ca);
+
         entityManager.close();
         entityManagerFactory.close();
     }
