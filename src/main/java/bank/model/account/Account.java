@@ -30,8 +30,9 @@ abstract public class Account {
     public Account() {
     }
 
-    public Account(Integer agency, Client client) {
+    public Account(Integer agency, Client client, Integer accountNumber) {
         this.agency = agency;
+        this.accountNumber = accountNumber;
         this.client = client;
         this.balance = 0d;
     }
