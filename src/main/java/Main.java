@@ -20,11 +20,6 @@ public class Main {
         CheckingAccount ca = new CheckingAccount(1001, 101, le1);
         SavingAccount sa = new SavingAccount(1001, 102, le1);
 
-//        le1.setAccounts(new HashSet<Account>(){{
-//            add(ca);
-//            add(sa);
-//        }});
-
 
         EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("Bank-PU");
         EntityManager entityManager = entityManagerFactory.createEntityManager();
@@ -35,9 +30,14 @@ public class Main {
         bank.addNewClient(le2);
         bank.assignAccountToClient(ip1, ca);
         bank.assignAccountToClient(ip1, sa);
+        bank.performDeposit(ca, 200);
+        bank.performDeposit(sa, 300);
+        bank.performWithdraw(ca, 105.5);
+        bank.performTransfer(sa, 25, ca);
 
         bank.showAllClients();
         bank.showAllAccounts();
+        bank.showAllTransactions();
 
         entityManager.close();
         entityManagerFactory.close();
