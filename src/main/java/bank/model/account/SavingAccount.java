@@ -11,8 +11,8 @@ public class SavingAccount extends Account{
     public SavingAccount() {
     }
 
-    public SavingAccount(Integer agency, Client client, Integer accountNumber) {
-        super(agency, client, accountNumber);
+    public SavingAccount(Integer agency, Integer accountNumber, Client client) {
+        super(agency, accountNumber, client);
     }
 
     public String toString(){

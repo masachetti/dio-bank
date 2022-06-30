@@ -11,8 +11,8 @@ public class CheckingAccount extends Account{
     public CheckingAccount() {
     }
 
-    public CheckingAccount(Integer agency, Client client, Integer accountNumber) {
-        super(agency, client, accountNumber);
+    public CheckingAccount(Integer agency, Integer accountNumber, Client client) {
+        super(agency, accountNumber, client);
     }
 
     public String toString(){
