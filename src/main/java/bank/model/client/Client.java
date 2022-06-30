@@ -18,7 +18,7 @@ abstract public class Client {
     @Column(name = "name")
     private String name;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Account> accounts;
 
     public Client() {

@@ -24,7 +24,7 @@ abstract public class Account {
     @Column(name = "balance")
     private Double balance;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Client client;
 
     public Account() {
