@@ -14,6 +14,7 @@ import utils.TablePrinter;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +26,7 @@ public class Bank {
     public Bank(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
-    
+
     public void showAllClients() {
         String jpqlQuery = "select c from Client c";
         try {
@@ -68,7 +69,7 @@ public class Bank {
                         account.getAgency().toString(),
                         account.getAccountNumber().toString(),
                         accountType,
-                        String.format("R$%.2f",account.getBalance()),
+                        String.format("R$%.2f", account.getBalance()),
                         account.getClient().getName());
                 rows.add(row);
             });
@@ -78,33 +79,49 @@ public class Bank {
         }
     }
 
+    private void printTransactions(List<Transaction> transactionList) {
+        List<String> header = Arrays.asList("Id", "Operation", "Account N.", "Value", "Rec. Account N.");
+        List<List<String>> rows = new ArrayList<>();
+
+        transactionList.forEach(transaction -> {
+            String transactionType = "Null";
+            String recAccountNumberString = "Null";
+            if (transaction instanceof Deposit) {
+                transactionType = "Deposit";
+            } else if (transaction instanceof Withdraw) {
+                transactionType = "Withdraw";
+            } else if (transaction instanceof Transfer) {
+                transactionType = "Transfer";
+                recAccountNumberString = ((Transfer) transaction).getReceiverAccount().getAccountNumber().toString();
+            }
+            List<String> row = Arrays.asList(
+                    transaction.getId().toString(),
+                    transactionType,
+                    transaction.getAccount().getAccountNumber().toString(),
+                    String.format("R$%.2f", transaction.getValue()),
+                    recAccountNumberString);
+            rows.add(row);
+        });
+        TablePrinter.printTable(header, rows, 5);
+    }
+
     public void showAllTransactions() {
         String jpqlQuery = "select t from Transaction t";
         try {
             List<Transaction> transactionList = entityManager.createQuery(jpqlQuery, Transaction.class).getResultList();
-            List<String> header = Arrays.asList("Id", "Operation", "Account N.", "Value", "Rec. Account N.");
-            List<List<String>> rows = new ArrayList<>();
+            printTransactions(transactionList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-            transactionList.forEach(transaction -> {
-                String transactionType = "Null";
-                String recAccountNumberString = "Null";
-                if (transaction instanceof Deposit) {
-                    transactionType = "Deposit";
-                } else if (transaction instanceof Withdraw) {
-                    transactionType = "Withdraw";
-                } else if (transaction instanceof Transfer) {
-                    transactionType = "Transfer";
-                    recAccountNumberString = ((Transfer) transaction).getReceiverAccount().getAccountNumber().toString();
-                }
-                List<String> row = Arrays.asList(
-                        transaction.getId().toString(),
-                        transactionType,
-                        transaction.getAccount().getAccountNumber().toString(),
-                        String.format("R$%.2f",transaction.getValue()),
-                        recAccountNumberString);
-                rows.add(row);
-            });
-            TablePrinter.printTable(header, rows, 5);
+    public void showAccountTransactions(Account account) {
+        String jpqlQuery = "SELECT t FROM Transaction t WHERE t.account = :account OR t.receiverAccount = :account";
+        try {
+            TypedQuery<Transaction> query = entityManager.createQuery(jpqlQuery, Transaction.class);
+            query.setParameter("account", account);
+            List<Transaction> transactionList = query.getResultList();
+            printTransactions(transactionList);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -166,4 +183,19 @@ public class Bank {
         entityManager.persist(transfer);
         entityManager.getTransaction().commit();
     }
+
+    public Client getClientByCPF(String cpf) {
+        String jpqlQuery = "select i from Individual i where i.cpf = :cpf";
+        TypedQuery<Individual> query = entityManager.createQuery(jpqlQuery, Individual.class);
+        query.setParameter("cpf", cpf);
+        return query.getSingleResult();
+    }
+
+    public Client getClientByCNPJ(String cnpj) {
+        String jpqlQuery = "select i from Corporation i where i.cnpj = :cnpj";
+        TypedQuery<Corporation> query = entityManager.createQuery(jpqlQuery, Corporation.class);
+        query.setParameter("cnpj", cnpj);
+        return query.getSingleResult();
+    }
+
 }
