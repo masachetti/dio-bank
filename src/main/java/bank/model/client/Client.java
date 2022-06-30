@@ -4,6 +4,7 @@ package bank.model.client;
 import bank.model.account.Account;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -26,6 +27,7 @@ abstract public class Client {
 
     public Client(String name) {
         this.name = name;
+        accounts = new HashSet<>();
     }
 
     public Integer getId() {
