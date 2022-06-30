@@ -7,17 +7,12 @@ import javax.persistence.Entity;
 
 @Entity
 @DiscriminatorValue("WITHDRAW")
-public class Withdraw extends Transaction{
-//    public Withdraw(Account account, Double value) {
-//        super(account, value);
-//    }
-
-    public Withdraw(Double value) {
-        super(value);
+public class Withdraw extends Transaction {
+    public Withdraw() {
     }
 
-    @Override
-    public boolean performTransaction() {
-        return false;
+    public Withdraw(Account account, Double value) {
+        super(account, value);
     }
+
 }

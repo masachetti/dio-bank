@@ -17,20 +17,20 @@ abstract public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-//    private Account account;
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Account account;
 
     private Double value;
 
-    abstract public boolean performTransaction();
 
-//    public Transaction(Account account, Double value) {
-//        this.account = account;
-//        this.value = value;
-//    }
+    public Transaction() {
+    }
 
-    public Transaction(Double value) {
+    public Transaction(Account account, Double value) {
+        this.account = account;
         this.value = value;
     }
+
 
     public Integer getId() {
         return id;
@@ -40,13 +40,13 @@ abstract public class Transaction {
         this.id = id;
     }
 
-//    public Account getAccount() {
-//        return account;
-//    }
-//
-//    public void setAccount(Account account) {
-//        this.account = account;
-//    }
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
 
     public Double getValue() {
         return value;
@@ -61,21 +61,16 @@ abstract public class Transaction {
         if (this == o) return true;
         if (!(o instanceof Transaction)) return false;
         Transaction that = (Transaction) o;
-//        return id.equals(that.id) && account.equals(that.account) && value.equals(that.value);
-        return id.equals(that.id) && value.equals(that.value);
+        return id.equals(that.id);
     }
 
     @Override
-//    public int hashCode() {
-//        return Objects.hash(id, account, value);
-//    }
     public int hashCode() {
-        return Objects.hash(id, value);
+        return Objects.hash(id);
     }
 
     protected String getDescriptionString() {
-//        return "id=" + id + ", account=" + account + ", value=" + value;
-        return "id=" + id + ", value=" + value;
+        return "id=" + id + ", accountNumber=" + account.getAccountNumber() + ", value=" + value;
     }
 
     @Override

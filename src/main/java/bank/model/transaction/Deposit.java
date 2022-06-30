@@ -8,18 +8,12 @@ import javax.persistence.Table;
 
 @Entity
 @DiscriminatorValue("DEPOSIT")
-public class Deposit extends Transaction{
-
-//    public Deposit(Account account, Double value) {
-//        super(account, value);
-//    }
-
-    public Deposit(Double value) {
-        super(value);
+public class Deposit extends Transaction {
+    public Deposit() {
     }
 
-    @Override
-    public boolean performTransaction() {
-        return false;
+    public Deposit(Account account, Double value) {
+        super(account, value);
     }
+
 }
