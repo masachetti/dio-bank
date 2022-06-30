@@ -1,12 +1,16 @@
-package bank.model;
+package bank.model.client;
 
+
+import bank.model.account.Account;
 
 import javax.persistence.*;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Table(name = "tb_clients")
-public class Client {
+@Inheritance(strategy = InheritanceType.JOINED)
+abstract public class Client {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,8 +18,11 @@ public class Client {
     @Column(name = "name")
     private String name;
 
-    //    private IdentifierTypes identifier_type;
-    //    private String identifier;
+    @OneToMany(fetch = FetchType.LAZY)
+    private Set<Account> accounts;
+
+    public Client() {
+    }
 
     public Client(String name) {
         this.name = name;
@@ -37,10 +44,18 @@ public class Client {
         this.name = name;
     }
 
+    public Set<Account> getAccounts() {
+        return accounts;
+    }
+
+    public void setAccounts(Set<Account> accounts) {
+        this.accounts = accounts;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof Client)) return false;
         Client client = (Client) o;
         return Objects.equals(id, client.id) && Objects.equals(name, client.name);
     }
@@ -50,8 +65,12 @@ public class Client {
         return Objects.hash(id, name);
     }
 
+    protected String getDescriptionString() {
+        return "id=" + id + ", name='" + name + "', accounts=" + accounts;
+    }
+
     @Override
     public String toString() {
-        return "Client{" + "id=" + id + ", name='" + name + '\'' + '}';
+        return "Client{" + getDescriptionString() + '}';
     }
 }
